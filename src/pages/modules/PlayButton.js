@@ -6,8 +6,15 @@ class PlayButton extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
+            playing: true
+        }
+    }
+
+    componentWillReceiveProps(props) {
+        this.setState((state) => ({
             playing: props.playing
         }
+        ))
     }
 
     componentDidMount() {

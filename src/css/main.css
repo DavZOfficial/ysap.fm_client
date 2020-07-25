@@ -17,7 +17,7 @@ main, header {
 
 
 #track-description {
-
+  
     font-family: "Montserrat", 'Rubik';
     font-style: normal;
     font-weight: normal;
@@ -28,6 +28,14 @@ main, header {
     
     word-wrap: break-word;
     
+}
+
+#track-description.smaller {
+  font-size: 12px;
+  line-height: 18px;
+  font-family: "Montserrat", 'Rubik';
+  font-style: normal;
+  font-weight: normal;
 }
 
 #copyright {
@@ -180,6 +188,7 @@ body {
 #album-cover {
   width: 500px;
   height: 500px;
+  border-radius: 25px;
 }
 
 @media only screen and (max-width: 781px) {
@@ -187,4 +196,38 @@ body {
     height: 100%;
     width: 100%;
   }
+}
+
+.submit-field {
+  background-color: rgb(12, 12, 12);
+  border-radius: 15px;
+  border: none;
+  color: white;
+  text-decoration: none;
+  outline: none;
+
+  font-family: "Montserrat", 'Rubik';
+  font-style: normal;
+  font-weight: normal;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+a {
+  text-decoration: none;
+  color: #FFFFFF;
+background: black;
+border: none;
+}
+
+a.link {
+  text-decoration: underline;
+  color: #FDDF00;
+  border: none;
+}
+
+
+
+.constwidth {
+  width: 400px;
 }

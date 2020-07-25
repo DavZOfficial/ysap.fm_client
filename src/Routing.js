@@ -7,17 +7,15 @@ import Box from "@material-ui/core/Box";
 import { sizing } from '@material-ui/system';
 import Player from "./pages/Player";
 import About from "./pages/About";
-import io from "socket.io-client";
-
+import Submit from "./pages/Submit";
 
 import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  Link,
+  Prompt
 } from "react-router-dom";
-
-var socket = io("localhost:4000");
 
 
 class Routing extends React.Component {
@@ -25,10 +23,6 @@ class Routing extends React.Component {
     super(props);
     this.state = {endpoint: "localhost:4000"};
     
-  }
-
-  componentDidMount() {
-    socket.emit("event", "HELLO!")
   }
 
 
@@ -60,7 +54,7 @@ class Routing extends React.Component {
             <main>
               <Switch>
                 <Route path="/player">
-                  <Player socket={socket}></Player>
+                  <Player></Player>
                 </Route>
                 <Route path="/about">
                   <About></About>
@@ -69,7 +63,11 @@ class Routing extends React.Component {
                   <h2>Here would be the login page.</h2>
                 </Route>
                 <Route path="/submit">
-                  <h2>Submit boi</h2>
+                  <Submit></Submit>
+                  <Prompt
+                    when={true}
+                    message="Are you sure you want to leave? All data will be lost!"
+                  />
                 </Route>
                 <Route path="/">
                   <h2>Welcome dudes</h2>
