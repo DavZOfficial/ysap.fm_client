@@ -9,6 +9,7 @@
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "@types/mina": "^0.4.1",
+    "axios": "^0.19.2",
     "html-react-parser": "^0.13.0",
     "icy": "^2.1.0",
     "lzma": "^2.3.2",

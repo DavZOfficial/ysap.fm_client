@@ -15,13 +15,13 @@ import icy from "icy";
 
 
 
-
-var playio = io("localhost:4000");
+var playio = io(":4000");
 
 class Player extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
+            domain: "http://localhost:8000",
             playing: true,
             channel: "Synthwave",
             mount: "synthwave",
@@ -32,73 +32,85 @@ class Player extends React.Component {
             duration: 4.20,
             progress: 0.2,
             volume: 1,
-            album_cover: null
+            album_cover: null,
+            TVstatic: true
         }
-        
+        this.ctx = undefined
+        this.imageData = undefined
     }
-
-    drawAlbumCover = (data) => {
-            var canvas = this.refs.canvas
-            let dpi = window.devicePixelRatio;
-            function fix_dpi() {
-                //get CSS height
-                //the + prefix casts it to an integer
-                //the slice method gets rid of "px"
-                let style_height = +getComputedStyle(canvas).getPropertyValue("height").slice(0, -2);
-                //get CSS width
-                let style_width = +getComputedStyle(canvas).getPropertyValue("width").slice(0, -2);
-                //scale the canvas
-                canvas.setAttribute('height', style_height * dpi);
-                canvas.setAttribute('width', style_width * dpi);
-            }
-
-            
-            
-            var ctx = canvas.getContext("2d")
-            fix_dpi()  //fixes blurrines
-
-
-            //add tv static effect later
-            var image = new Image();
-            image.src =  'data:image/jpeg;base64,' + data
-
-            image.onload = function() {
-                ctx.drawImage(image, 0, 0, image.width,    image.height,     // scales so that the image fits inside the canvas element
-                    0, 0, canvas.width, canvas.height);
-            };
-    }
-    
 
     componentDidMount = () => {
         playio.emit("metadata", this.state.mount)
-        
         var reactThis = this;
 
+        this.fix_dpi()  //fixes blurrines
+
+        this.ctx = this.refs.canvas.getContext("2d")
+        this.imageData = this.ctx.createImageData(this.refs.canvas.width, this.refs.canvas.height);
+        
+
+        this.setState({
+            domain: "http://" + playio.io.engine.hostname + ":8000/"  //set domain to whatever socket is connected to
+        })
+
         playio.on("metadata", function(msg) {
-            console.log(msg)
             reactThis.setState((state) => ({
                 track_title: msg.title,
                 track_artist: msg.artist,
                 track_description: reactparser(msg.description),
                 copyright: msg.copyright,
                 duration: msg.duration,
-                album_cover: msg.album_cover.buf
-            }), reactThis.drawAlbumCover(msg.album_cover.buf))
-        })
-
-        icy.get("http://localhost:8000/synthwave", function (res) {
-    console.log('HTTP HEADERS:');
-    console.log(res.headers);
-            // log any "metadata" events that happen
-            res.on('metadata', function (metadata) {
-                var parsed = icy.parse(metadata);
-                console.error(parsed);
-                });
-            
+                album_cover: msg.album_cover.buf,
+                TVstatic: false,
+                volume: 1
+            }), function() {
+                reactThis.drawAlbumCover(msg.album_cover.buf)
+                })
         })
     }
 
+    fix_dpi = () => {
+        let dpi = window.devicePixelRatio;
+        let style_height = +getComputedStyle(this.refs.canvas).getPropertyValue("height").slice(0, -2);
+        let style_width = +getComputedStyle(this.refs.canvas).getPropertyValue("width").slice(0, -2);
+        this.refs.canvas.setAttribute('height', style_height * dpi);
+        this.refs.canvas.setAttribute('width', style_width * dpi);
+    }
 
+    drawAlbumCover = (data) => {
+            let that = this
+            
+
+            var image = new Image();
+            image.src =  'data:image/jpeg;base64,' + data
+
+            image.onload = function() {
+                that.ctx.drawImage(image, 0, 0, image.width,    image.height,     // scales so that the image fits inside the canvas element
+                    0, 0, that.refs.canvas.width, that.refs.canvas.height);
+            };
+    }
+    
+    tvStaticLooper = () => {
+        if (this.refs.canvas !== undefined) {     //making sure we don't get an error here because component hasnt rendered.
+            if (this.state.TVstatic) {
+                for (var i = 0, a = this.imageData.data.length; i < a; i++) {
+    
+                    this.imageData.data[i] = (Math.random() * 255);
+                }
+                this.ctx.putImageData(this.imageData, 0, 0);
+                requestAnimationFrame(this.tvStaticLooper)
+            }
+        }
+        
+    }
+
+    componentDidUpdate = () => {
+        if (this.refs.canvas !== undefined) {  
+            if (this.state.TVstatic) {                            //run static loop here
+                requestAnimationFrame(this.tvStaticLooper);
+            }
+        }
+    }
 
 
     onPlayClicked = (playstate) => {
@@ -106,12 +118,9 @@ class Player extends React.Component {
             {playing: playstate}
         ), function() {
             if (!this.state.playing) {
-                console.log(this.player.howler.seek());
-                this.player.howler.stop();
+                //this.player.howler.stop();
                 this.player.howler.unload();
             }
-            
-            playio.emit("event", "BOOGAAAA" + Math.random().toString() + this.state.playing)
         })
     }
 
@@ -122,17 +131,25 @@ class Player extends React.Component {
     }
 
     onChannelChanged = (event, newMountLink) => {
-        this.player.howler.stop()
-        this.player.howler.unload()
-        this.setState((state) => (
-            {channel: newMountLink,
-            mount: newMountLink}
-        ), function() {
-            this.player.howler.load()
-            this.player.howler.play()
-            playio.emit("metadata", newMountLink)
-            
-        })
+        if (!this.state.TVstatic) {
+            this.player.howler.stop()
+            this.player.howler.unload()
+            this.setState((state) => (
+                {
+                channel: newMountLink,
+                mount: newMountLink,
+                TVstatic: true,
+                track_title: "Loading...",
+                track_artist: "Loading...",
+                track_description: <p id="track-description">Loading...</p>,
+                copyright: "Loading...",
+                duration: 0}
+            ), function() {
+                //this.player.howler.load()
+                this.player.howler.play()
+                playio.emit("metadata", newMountLink)
+            })
+        }
     }
 
 
@@ -144,7 +161,7 @@ class Player extends React.Component {
 
     render() {
         return (
-            <div>
+            <div id="occupy-max-height">
                 <Grid container justify="space-around" spacing={5} direction="row">  {/* Player */}
                     {/*Left Hand*/}
                     <Grid item>  
@@ -198,7 +215,7 @@ class Player extends React.Component {
                             
                             {/* Copyright */}
                             <Grid item>
-                                <p id="copyright">Copyright: {this.state.copyright}</p>
+                                <p id="copyright">License: {this.state.copyright}</p>
                             </Grid>
                         
                         </Grid>
@@ -206,7 +223,7 @@ class Player extends React.Component {
                         {/* Playback Controls  */}
                         <Grid container justify="space-between" spacing={3} alignItems="center" direction="row">
                             <ReactHowler
-                            src={"http://localhost:8000/" + this.state.mount}
+                            src={this.state.domain + this.state.mount}
                             playing={this.state.playing}
                             html5={true}
                             format={["mp3"]}
@@ -252,6 +269,18 @@ export default Player;
 
 
 /*
+
+
+icy.get("http://192.168.2.9", function (res) {      //maybe try without the synthwave thing
+            console.log('HTTP HEADERS:');
+            console.log(res.headers);
+            // log any "metadata" events that happen
+            res.on('metadata', function (metadata) {
+                var parsed = icy.parse(metadata);
+                console.error(parsed);
+                });
+            
+        })
 
 
 */

@@ -2,9 +2,9 @@ import React from "react";
 import Dropzone from "react-dropzone";
 import Grid from "@material-ui/core/Grid";
 
+import Drop from "./modules/DropZoneElement";
 
-
-
+import axios from "axios";
 
 var licenseInfo = {
     "no-rights-reserved": "Also known as CC0, it lets you opt out of copyright protection and give away your music to the public. You should only apply CC0 on your own work, unless you have the rights necessary to apply it to another person's work.",
@@ -18,6 +18,8 @@ var licenseInfo = {
 }
 
 
+//  PLEASE FIX EVERYTHING SUCH AS THE IMAGE NOT IN SIZE ALERT THING
+
 
 
 
@@ -25,7 +27,9 @@ class Submit extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            license_explanation: "Choose a license in the licenses tab for a brief explanation."
+            license_explanation: "Choose a license in the licenses tab for a brief explanation.",
+            selectedAudio: null,
+            selectedImage: null
         };
 
     }
@@ -36,19 +40,128 @@ class Submit extends React.Component {
         let information = licenseInfo[event.target.value]
         if (value !== "") {
             this.setState((state) => ({
-                license_explanation: information
+                license_explanation: information,
+                uploading: false
             }))
         }  
     }
 
     sendNewSubmission = () => {
+        var validation = this.validateAllFields(true)
+        var that = this
+        if (validation.result) {
+            this.validateResolution(this.state.selectedImage, function(imageIsInSize, that) {
+                if (imageIsInSize) {
+                    var data = new FormData()
+                    data.set("title", that.refs.trackname.value)
+                    data.set("artist", that.refs.artistname.value)
+                    data.set("description", that.refs.description.value)
+                    data.set("license", that.refs.licensefield.value)
+                    data.set("duration", 0.2)
+                    data.set("mountpoint", "synthwave")
+                    data.set("albumCover", that.state.selectedImage)
+                    data.set("soundFile", that.state.selectedAudio)
+                    console.log(data)
+                    that.setState({uploading: false})              //set to TRUE here
+                    alert("sending track... please wait...")
+                    fetch("http://localhost:4001/api/submit/",
+                    {
+                        method: "POST",
+                        body: data,
+                        headers : { 
+                            'Accept': 'application/json, text/plain, */*'
+                        }
+                    })
+                    .then(function(res){ console.log(res); alert("Submitted."); console.log("ok");})  //check response                         instead of consol,e log add this: window.location.href = '/player'
+                } else {
+                    alert("IMAGE NOT IN SIZE I REPEAT IMAGE NOT IN SIZE")
+                }
+            })
+            
+        } else {
+            alert(validation.reason)
+        }
         
     }
 
+    validateResolution = (file, callback) => {
+        var reader = new FileReader();
+        reader.readAsDataURL(file);
+        var that = this
+        reader.onload = function (e) {
 
-    validateAllFields = () => {
-        if (this.refs.trackname.value !== "" && this.refs.artistname.value !== "" && this.refs.description.value !== "") {
-            //check if files uploaded
+            //Initiate the JavaScript Image object.
+            var image = new Image();
+
+            //Set the Base64 string return from FileReader as source.
+            image.src = e.target.result;
+
+            //Validate the File Height and Width.
+            var resolutionValidation = function () {
+                var height = this.height;
+                var width = this.width;
+                if (height < 500 || width < 500) {
+                    callback(false, that)
+                } else {
+                    if (height/width === 1.0) {
+                        callback(true, that)
+                    }
+                    else {
+                        callback(true, that)              //CHANGE TO FALSE
+                    }
+                }
+            };
+            image.onload = resolutionValidation
+        }
+    }
+
+
+    validateAllFields = (forceTrue = false) => {
+        if (forceTrue) {
+            return ({result: true})
+        } else {
+            console.log((this.state.selectedAudio !== null) , (this.state.selectedImage !== null))
+            if ((this.state.selectedAudio !== null) && (this.state.selectedImage !== null)) {
+                if (this.refs.trackname.value !== null) {
+                    if (this.refs.artistname.value !== "") {
+                        if (this.refs.description.value !== "") {
+                            if (this.refs.licensefield.value !== "") {
+                                return ({result: true})
+                            } else {
+                                return ({result: false, reason: "A license has not been selected."})
+                            }
+                        } else {
+                            return ({result: false, reason: "Description field is empty"})
+                        }
+                    } else {
+                        return ({result: false, reason: "Artist field is empty"})
+                    }
+                } else {
+                    return ({result: false, reason: "Title field is empty"})
+                }
+            } else {
+                return ({result: false, reason: "Files are not uploaded"})
+            }
+        }
+        
+    }
+
+    handleChangeStatus = (status, fileType) => {
+        if (status.target.value !== null) { 
+            let file = status.target.files[0]
+            this.setState(() => {
+                if (!(file === undefined)) {
+                    console.log(file)
+                    if (file.type === "audio/mpeg" || file.type === "audio/mp3" || file.type === "audio/wav") {
+                        return ({selectedAudio: file})
+                    } else if (file.type === "image/jpg" || file.type === "image/jpeg" || file.type === "image/png") {
+                        return ({selectedImage: file})
+                    }
+                }
+            }, function() {
+                console.log(this.state)
+                console.log(this.validateAllFields())
+            })
         }
     }
 
@@ -64,7 +177,7 @@ class Submit extends React.Component {
                         <Grid item justify="space-around" spacing={5} direction="column">
 
                             <Grid item lg spacing={0}>
-                                <h2 id="title">Submit Your Music</h2>
+                                <h2 id="title">{(this.state.uploading)? "Uploading... Please Wait" : "Submit Your Music"}</h2>
                             </Grid>
                         </Grid>
 
@@ -72,47 +185,30 @@ class Submit extends React.Component {
                         <Grid container item direction="column" alignitems="stretch">
                             <Grid container spacing={2} direction="column">
                                 <Grid item>
-                                    <input type="text" class="submit-field constwidth" ref="trackname" placeholder="Name of your track"></input>
+                                    <input disabled={this.state.uploading} type="text" class="submit-field constwidth" ref="trackname" placeholder="Name of your track"></input>
                                 </Grid>
                                 <Grid item>
-                                    <input type="text" class="submit-field constwidth" ref="artistname" placeholder="What is your artist name?"></input>
+                                    <input disabled={this.state.uploading} type="text" class="submit-field constwidth" ref="artistname" placeholder="What is your artist name?"></input>
                                 </Grid>
                                 <Grid item xs>
-                                    <textarea style={{height: 200}}class="submit-field constwidth" ref="description" placeholder="Description of your Track."></textarea>
+                                    <textarea disabled={this.state.uploading} style={{height: 200}}class="submit-field constwidth" ref="description" placeholder="Description of your Track."></textarea>
                                 </Grid>
                                 
                             </Grid>
                             {/* Music Submission */}
                             <Grid item xs>
-                            <h3 class="submit-field">Track</h3>
-                            <Dropzone class="submit-field" styles={{color: "white"}} onDrop={acceptedFiles => console.log(acceptedFiles)}>
-                                {({getRootProps, getInputProps}) => (
-                                    <section style={{border_color: "white"}}>
-                                    <div {...getRootProps()}>
-                                        <input {...getInputProps()} />
-                                        <p>Drag 'n' drop a mp3 or wav</p>
-                                    </div>
-                                    </section>
-                                )}
-                                </Dropzone>
+
+                            <input disabled={this.state.uploading} type="file" class="drop-container" onChange={(event) => {this.handleChangeStatus(event)}}></input>
+
                             </Grid>
-                            {/* Album Cover */}
                             <Grid item xs>
-                                <h3 class="submit-field">Cover</h3>
-                            <Dropzone class="submit-field" styles={{color: "white"}} onDrop={acceptedFiles => console.log(acceptedFiles)}>
-                                {({getRootProps, getInputProps}) => (
-                                    <section style={{border_color: "white"}}>
-                                    <div {...getRootProps()}>
-                                        <input {...getInputProps()} />
-                                        <p>Drag 'n' drop a png or jpg</p>
-                                    </div>
-                                    </section>
-                                )}
-                                </Dropzone>
+
+                            <input disabled={this.state.uploading} type="file" class="drop-container" onChange={(event) => {this.handleChangeStatus(event)}}></input>
+
                             </Grid>
                             <Grid item>
-                                <label class="submit-field" for="license" ref="licensefield">License: </label>
-                                <select onChange={(event) => this.licenseChanged(event)} name="license" id="cars">
+                                <label class="submit-field" for="license">License: </label>
+                                <select disabled={this.state.uploading} ref="licensefield" onChange={(event) => this.licenseChanged(event)} name="license">
                                     <option value="no-rights-reserved">No Rights Reserved</option>
                                     <option value="all-rights-reserved">All Rights Reserved</option>
                                     <option value="cc-by">Creative Commons: By Attribution</option>
@@ -123,8 +219,16 @@ class Submit extends React.Component {
                                     <option value="cc-by-nc-sa">Creative Commons: Attribution, Share Alike, Non Commercial</option>
                                 </select>
                                 </Grid>
+                                <Grid item>
+                                <label class="submit-field" for="mount">Channel: </label>
+                                <select disabled={this.state.uploading} ref="mountpoint" onChange={(event) => this.licenseChanged(event)} name="mount">
+                                    <option value="no-rights-reserved">Synthwave</option>
+                                    <option value="all-rights-reserved">Lofi</option>
+                                    <option value="cc-by">House</option>
+                                    </select>
+                                </Grid>
                             <Grid item>
-                                <button type="button">Submit</button>
+                                <button type="button" onClick={(event) => this.sendNewSubmission(event)}>Submit</button>
                             </Grid>
                         </Grid>
                     </Grid>
@@ -147,15 +251,15 @@ class Submit extends React.Component {
                             {/* Track Description */}
                             <Grid item>
                                 <p id="track-description">
-                                    The track: <br></br>
-                                    - Make sure your track is at least a 120kbps mp3 file OR a .wav file<br></br>
-                                    - The file has to have a 44100hz sample rate.<br></br>
+                                    Supported Formats: <br></br>
+                                    - MP3: Minimum 120kbps at 44.1kHz<br></br>
+                                    - Wav: 44.1kHz<br></br>
                                 </p>
                             </Grid>
                             <Grid item>
                                 <p id="track-description">
                                     Album cover: <br></br>
-                                    - At least 800x800 image resolution in either png or jpg. <br></br>
+                                    - Greater than 500x500 PNG or JPG.<br></br>
                                     - Aspect ratio has to be 1:1.
                                 </p>
                             </Grid>

@@ -199,7 +199,7 @@ body {
 }
 
 .submit-field {
-  background-color: rgb(12, 12, 12);
+  background-color: rgb(12,12,12);
   border-radius: 15px;
   border: none;
   color: white;
@@ -230,4 +230,25 @@ a.link {
 
 .constwidth {
   width: 400px;
+}
+
+.drop-container {
+  background-color: rgb(12, 12, 12);
+  border-radius: 15px;
+  border: none;
+  color: white;
+  text-decoration: none;
+  outline: none;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+}
+.drop-container .expanded {
+  min-height: 200px;
+}
+
+#occupy-max-height {
+  height: 100%;
+  align-items: center;
+  top: 50%;
 }
