@@ -32,18 +32,19 @@ class Routing extends React.Component {
           <Router>
             <header>
               <Grid container direction="row" justify="flex-start" alignItems="center" alignContent="center">
-                <Box item width={0.75}>
-                    <Link to="/player"><img src={require("./logo.png")} alt="album" id="logo" height="116" width="116"></img></Link>
+                <Box item xs={2} height={"120px"}>
+                  {/* width={0.75} */}
+                    <Link to="/player"><img src={require("./logo240.png")} alt="album" id="logo" height="120" width="120"></img></Link>
                 </Box >
-                <Grid item>
+                <Grid xs item spacing={4}>
                   <Grid container justify="flex-end" spacing={4} alignItems="center" direction="row">
-                    <Grid xs={4} item>
+                    <Grid xs={3} md={2} lg={1} item>
                         <Link to="/about">About</Link>
                     </Grid>
-                    <Grid xs={4} item>
+                    <Grid xs={3} md={2} lg={1} item>
                         <Link to="/login">Login</Link>
                     </Grid>
-                    <Grid xs={4} item>
+                    <Grid xs={3} md={2} lg={1} item>
                         <Link to="/submit">Submit</Link>
                     </Grid>
                   </Grid>

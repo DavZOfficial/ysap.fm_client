@@ -47,7 +47,7 @@ class Submit extends React.Component {
     }
 
     sendNewSubmission = () => {
-        var validation = this.validateAllFields(true)
+        var validation = this.existenceCheck(false)
         var that = this
         if (validation.result) {
             this.validateResolution(this.state.selectedImage, function(imageIsInSize, that) {
@@ -58,13 +58,13 @@ class Submit extends React.Component {
                     data.set("description", that.refs.description.value)
                     data.set("license", that.refs.licensefield.value)
                     data.set("duration", 0.2)
-                    data.set("mountpoint", "synthwave")
+                    data.set("mountpoint", that.refs.mountpoint.value)
                     data.set("albumCover", that.state.selectedImage)
                     data.set("soundFile", that.state.selectedAudio)
                     console.log(data)
-                    that.setState({uploading: false})              //set to TRUE here
+                    that.setState({uploading: true})              //set to TRUE here
                     alert("sending track... please wait...")
-                    fetch("http://localhost:4001/api/submit/",
+                    fetch("http://128.199.231.173:4001/api/submit/",
                     {
                         method: "POST",
                         body: data,
@@ -72,7 +72,7 @@ class Submit extends React.Component {
                             'Accept': 'application/json, text/plain, */*'
                         }
                     })
-                    .then(function(res){ console.log(res); alert("Submitted."); console.log("ok");})  //check response                         instead of consol,e log add this: window.location.href = '/player'
+                    .then(function(res){ console.log(res); alert("Submitted.");  window.location.href = '/player';})  //check response                         instead of consol,e log add this: window.location.href = '/player'
                 } else {
                     alert("IMAGE NOT IN SIZE I REPEAT IMAGE NOT IN SIZE")
                 }
@@ -101,7 +101,7 @@ class Submit extends React.Component {
                 var height = this.height;
                 var width = this.width;
                 if (height < 500 || width < 500) {
-                    callback(false, that)
+                    callback(true, that)      //set to false
                 } else {
                     if (height/width === 1.0) {
                         callback(true, that)
@@ -114,9 +114,8 @@ class Submit extends React.Component {
             image.onload = resolutionValidation
         }
     }
-
-
-    validateAllFields = (forceTrue = false) => {
+    
+    existenceCheck = (forceTrue = false) => {
         if (forceTrue) {
             return ({result: true})
         } else {
@@ -150,7 +149,7 @@ class Submit extends React.Component {
         if (status.target.value !== null) { 
             let file = status.target.files[0]
             this.setState(() => {
-                if (!(file === undefined)) {
+                if (file !== undefined) {
                     console.log(file)
                     if (file.type === "audio/mpeg" || file.type === "audio/mp3" || file.type === "audio/wav") {
                         return ({selectedAudio: file})
@@ -160,7 +159,7 @@ class Submit extends React.Component {
                 }
             }, function() {
                 console.log(this.state)
-                console.log(this.validateAllFields())
+                console.log(this.existenceCheck())
             })
         }
     }
@@ -168,7 +167,6 @@ class Submit extends React.Component {
     render() {
         return (
             <div>
-                
                 <Grid container justify="space-around" spacing={5} direction="row">  {/* Player */}
                     {/*Left Hand*/}
                     <Grid item direction="column" justify="space-around" xs alignItems="flex-end">
@@ -197,13 +195,13 @@ class Submit extends React.Component {
                             </Grid>
                             {/* Music Submission */}
                             <Grid item xs>
-
-                            <input disabled={this.state.uploading} type="file" class="drop-container" onChange={(event) => {this.handleChangeStatus(event)}}></input>
+                            <label class="submit-field" for="sound">CHOOSE ALBUM COVER IMAGE: </label>
+                            <input disabled={this.state.uploading} type="file" name="sound" class="drop-container" onChange={(event) => {this.handleChangeStatus(event)}}></input>
 
                             </Grid>
                             <Grid item xs>
-
-                            <input disabled={this.state.uploading} type="file" class="drop-container" onChange={(event) => {this.handleChangeStatus(event)}}></input>
+                            <label class="submit-field" for="img">CHOOSE SOUND FILE: </label>
+                            <input disabled={this.state.uploading} type="file" name="img" class="drop-container" onChange={(event) => {this.handleChangeStatus(event)}}></input>
 
                             </Grid>
                             <Grid item>
@@ -221,10 +219,10 @@ class Submit extends React.Component {
                                 </Grid>
                                 <Grid item>
                                 <label class="submit-field" for="mount">Channel: </label>
-                                <select disabled={this.state.uploading} ref="mountpoint" onChange={(event) => this.licenseChanged(event)} name="mount">
-                                    <option value="no-rights-reserved">Synthwave</option>
-                                    <option value="all-rights-reserved">Lofi</option>
-                                    <option value="cc-by">House</option>
+                                <select disabled={this.state.uploading} ref="mountpoint" name="mount">
+                                    <option value="synthwave">Synthwave</option>
+                                    <option value="lofi">Lofi</option>
+                                    <option value="house">House</option>
                                     </select>
                                 </Grid>
                             <Grid item>

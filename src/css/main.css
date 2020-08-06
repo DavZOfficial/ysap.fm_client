@@ -189,11 +189,13 @@ body {
   width: 500px;
   height: 500px;
   border-radius: 25px;
+  /*display: table-cell;*/
+  align-self: center;
 }
 
 @media only screen and (max-width: 781px) {
   #album-cover {
-    height: 100%;
+    height: auto;
     width: 100%;
   }
 }

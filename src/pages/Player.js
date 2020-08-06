@@ -15,7 +15,7 @@ import icy from "icy";
 
 
 
-var playio = io(":4000");
+var playio = io("http://128.199.231.173:2000");
 
 class Player extends React.Component {
     constructor(props) {
@@ -50,26 +50,56 @@ class Player extends React.Component {
         
 
         this.setState({
-            domain: "http://" + playio.io.engine.hostname + ":8000/"  //set domain to whatever socket is connected to
+            domain: "http://128.199.231.173:8000/"  //set domain to whatever socket is connected to
         })
+
+        /*var repeatSendMetadataRequest = setInterval(function() {
+            console.log(playio.connected)
+            if (!playio.connected) {
+                playio = io(reactThis.domain)
+                playio.emit("metadata", reactThis.state.mount)
+            } else {
+                clearInterval(repeatSendMetadataRequest)
+                this.player.howler.stop();
+                this.player.howler.unload();
+                this.player.howler.play();
+            }
+        }, 10000)*/
 
         playio.on("metadata", function(msg) {
             reactThis.setState((state) => ({
                 track_title: msg.title,
                 track_artist: msg.artist,
                 track_description: reactparser(msg.description),
+                mount: msg.mount,
                 copyright: msg.copyright,
                 duration: msg.duration,
                 album_cover: msg.album_cover.buf,
-                TVstatic: false,
-                volume: 1
+                TVstatic: false
             }), function() {
+                //clearInterval(repeatSendMetadataRequest)
                 reactThis.drawAlbumCover(msg.album_cover.buf)
+            })
+        })
+
+        playio.on("metareq", (msg) => {
+            if (msg === reactThis.state.mount) {
+                this.setState((state) => (
+                    {
+                    TVstatic: true,
+                    track_title: "Loading...",
+                    track_artist: "Loading...",
+                    track_description: <p id="track-description">Loading...</p>,
+                    copyright: "Loading...",
+                    duration: 0}
+                ), function() {
+                    playio.emit("metadata", msg)
                 })
+            }
         })
     }
 
-    fix_dpi = () => {
+    fix_dpi = () => {                        //fixes blurriness on displays when displaying images on canvas
         let dpi = window.devicePixelRatio;
         let style_height = +getComputedStyle(this.refs.canvas).getPropertyValue("height").slice(0, -2);
         let style_width = +getComputedStyle(this.refs.canvas).getPropertyValue("width").slice(0, -2);
@@ -114,14 +144,16 @@ class Player extends React.Component {
 
 
     onPlayClicked = (playstate) => {
-        this.setState((state) => (
-            {playing: playstate}
-        ), function() {
-            if (!this.state.playing) {
-                //this.player.howler.stop();
-                this.player.howler.unload();
-            }
-        })
+        if (!this.state.TVstatic) {
+            this.setState((state) => (
+                {playing: playstate}
+            ), function() {
+                if (!this.state.playing) {
+                    this.player.howler.stop();
+                    this.player.howler.unload();
+                }
+            })
+        }
     }
 
     onStop = () => {
@@ -131,7 +163,7 @@ class Player extends React.Component {
     }
 
     onChannelChanged = (event, newMountLink) => {
-        if (!this.state.TVstatic) {
+        if (!this.state.TVstatic) {                                      //!this.state.TVstatic
             this.player.howler.stop()
             this.player.howler.unload()
             this.setState((state) => (
@@ -143,6 +175,7 @@ class Player extends React.Component {
                 track_artist: "Loading...",
                 track_description: <p id="track-description">Loading...</p>,
                 copyright: "Loading...",
+                playing: false,
                 duration: 0}
             ), function() {
                 //this.player.howler.load()
@@ -154,9 +187,11 @@ class Player extends React.Component {
 
 
     sliderChanged = (event, newValue) => {
-        this.setState((state) => ({
-            volume: newValue / 100
-        }))
+        if (!this.state.TVstatic) {
+            this.setState((state) => ({
+                volume: newValue / 100
+            }))
+        }
     }
 
     render() {
@@ -164,8 +199,11 @@ class Player extends React.Component {
             <div id="occupy-max-height">
                 <Grid container justify="space-around" spacing={5} direction="row">  {/* Player */}
                     {/*Left Hand*/}
-                    <Grid item>  
-                        <Grid container direction="column" alignItems="stretch" spacing={0}>
+                    <Grid item
+                    direction="row"
+                    justify="center"
+                    alignItems="center">  
+                        <Grid item direction="column" alignItems="stretch" spacing={0}>
                             {/* Album Cover */}
                         <Grid item>
                         <canvas id="album-cover" ref="canvas" height="500" width="500"></canvas>
@@ -248,7 +286,7 @@ class Player extends React.Component {
                                     <VolumeDown style={{color: "white"}}/>
                                     </Grid>
                                     <Grid item xs>
-                                    <Slider defaultValue={100} onChange={(event, newValue) => this.sliderChanged(event, newValue)} aria-labelledby="continuous-slider" />
+                                    <Slider defaultValue={100} value={this.state.volume * 100} onChange={(event, newValue) => this.sliderChanged(event, newValue)} aria-labelledby="continuous-slider" />
                                     </Grid>
                                     <Grid item>
                                     <VolumeUp style={{color: "white"}} height={32}/>
