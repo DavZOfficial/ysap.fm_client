@@ -4,14 +4,14 @@ import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
 import Slider from '@material-ui/core/Slider';
 import Hidden from "@material-ui/core/Hidden";
-import Container from "@material-ui/core/Container";
+//import Container from "@material-ui/core/Container";
 import VolumeDown from '@material-ui/icons/VolumeDown';
-import VolumeUp from '@material-ui/icons/VolumeUp';
+//import VolumeUp from '@material-ui/icons/VolumeUp';
 import io from "socket.io-client"
 import PlayButton from "./modules/PlayButton";
 import ReactHowler from 'react-howler';
 import reactparser from "html-react-parser";
-import icy from "icy";
+//import icy from "icy";
 
 
 
@@ -21,7 +21,7 @@ class Player extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            domain: "http://localhost:8000",
+            domain: "http://128.199.231.173:8000/",
             playing: true,
             channel: "Synthwave",
             mount: "synthwave",
@@ -47,11 +47,6 @@ class Player extends React.Component {
 
         this.ctx = this.refs.canvas.getContext("2d")
         this.imageData = this.ctx.createImageData(this.refs.canvas.width, this.refs.canvas.height);
-        
-
-        this.setState({
-            domain: "http://128.199.231.173:8000/"  //set domain to whatever socket is connected to
-        })
 
         /*var repeatSendMetadataRequest = setInterval(function() {
             console.log(playio.connected)
@@ -73,7 +68,15 @@ class Player extends React.Component {
                 track_description: reactparser(msg.description),
                 mount: msg.mount,
                 copyright: msg.copyright,
-                duration: msg.duration,
+                duration: msg.duration
+            }), function() {
+                //clearInterval(repeatSendMetadataRequest)
+                console.log("Got metadata for " + msg.mount)
+            })
+        })
+
+        playio.on("album_art", function(msg) {
+            reactThis.setState((state) => ({
                 album_cover: msg.album_cover.buf,
                 TVstatic: false
             }), function() {
@@ -175,11 +178,10 @@ class Player extends React.Component {
                 track_artist: "Loading...",
                 track_description: <p id="track-description">Loading...</p>,
                 copyright: "Loading...",
-                playing: false,
                 duration: 0}
             ), function() {
                 //this.player.howler.load()
-                this.player.howler.play()
+                //this.player.howler.play()
                 playio.emit("metadata", newMountLink)
             })
         }
@@ -260,12 +262,16 @@ class Player extends React.Component {
 
                         {/* Playback Controls  */}
                         <Grid container justify="space-between" spacing={3} alignItems="center" direction="row">
+                            <iframe src="silence.mp3" allow="autoplay" style={{display: 'none'}}></iframe>
                             <ReactHowler
                             src={this.state.domain + this.state.mount}
+                            preload={true}
                             playing={this.state.playing}
                             html5={true}
                             format={["mp3"]}
                             volume={this.state.volume}
+                            onLoadError={(err) => {console.log(err)}}
+                            onPlay={() => {this.volume = this.state.volume}}
                             onEnd={() => this.onStop()}
                             ref={(ref) => (this.player = ref)}
                             ></ReactHowler>
@@ -288,9 +294,9 @@ class Player extends React.Component {
                                     <Grid item xs>
                                     <Slider defaultValue={100} value={this.state.volume * 100} onChange={(event, newValue) => this.sliderChanged(event, newValue)} aria-labelledby="continuous-slider" />
                                     </Grid>
-                                    <Grid item>
+                                    {/* <Grid item>
                                     <VolumeUp style={{color: "white"}} height={32}/>
-                                    </Grid>
+                                    </Grid> */}
                                 </Grid>
                             </Grid>
                         </Grid>

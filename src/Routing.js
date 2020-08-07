@@ -4,7 +4,7 @@ import "./css/main.css";
 
 import Grid from '@material-ui/core/Grid';
 import Box from "@material-ui/core/Box";
-import { sizing } from '@material-ui/system';
+//import { sizing } from '@material-ui/system';
 import Player from "./pages/Player";
 import About from "./pages/About";
 import Submit from "./pages/Submit";

@@ -1,10 +1,10 @@
 import React from "react";
-import Dropzone from "react-dropzone";
+//import Dropzone from "react-dropzone";
 import Grid from "@material-ui/core/Grid";
 
-import Drop from "./modules/DropZoneElement";
+//import Drop from "./modules/DropZoneElement";
 
-import axios from "axios";
+//import axios from "axios";
 
 var licenseInfo = {
     "no-rights-reserved": "Also known as CC0, it lets you opt out of copyright protection and give away your music to the public. You should only apply CC0 on your own work, unless you have the rights necessary to apply it to another person's work.",
@@ -180,7 +180,7 @@ class Submit extends React.Component {
                         </Grid>
 
                         {/* Information */}
-                        <Grid container item direction="column" alignitems="stretch">
+                        <Grid container item direction="column" spacing={1} alignitems="stretch">
                             <Grid container spacing={2} direction="column">
                                 <Grid item>
                                     <input disabled={this.state.uploading} type="text" class="submit-field constwidth" ref="trackname" placeholder="Name of your track"></input>
@@ -194,12 +194,12 @@ class Submit extends React.Component {
                                 
                             </Grid>
                             {/* Music Submission */}
-                            <Grid item xs>
+                            <Grid item>
                             <label class="submit-field" for="sound">CHOOSE ALBUM COVER IMAGE: </label>
                             <input disabled={this.state.uploading} type="file" name="sound" class="drop-container" onChange={(event) => {this.handleChangeStatus(event)}}></input>
 
                             </Grid>
-                            <Grid item xs>
+                            <Grid item>
                             <label class="submit-field" for="img">CHOOSE SOUND FILE: </label>
                             <input disabled={this.state.uploading} type="file" name="img" class="drop-container" onChange={(event) => {this.handleChangeStatus(event)}}></input>
 
@@ -225,7 +225,7 @@ class Submit extends React.Component {
                                     <option value="house">House</option>
                                     </select>
                                 </Grid>
-                            <Grid item>
+                            <Grid item spacing={3}>
                                 <button type="button" onClick={(event) => this.sendNewSubmission(event)}>Submit</button>
                             </Grid>
                         </Grid>

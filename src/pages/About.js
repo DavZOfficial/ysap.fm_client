@@ -58,7 +58,7 @@ class About extends React.Component {
                                 <p id="track-description">
                                     Davit Gogiberidze: <br></br>
                                     - Email: davitgogiberidze101@gmail.com <br></br>
-                                    - SoundCloud: <a href="https://soundcloud.com/davz-razorblades" target="_blank" rel="noopener noreferrer">DavZ</a>
+                                    - SoundCloud: <a class="link" href="https://soundcloud.com/davz-razorblades" target="_blank" rel="noopener noreferrer">DavZ</a>
                                 </p>
                             </Grid>
 
